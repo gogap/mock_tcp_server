@@ -7,7 +7,8 @@ type MatchItem struct {
 }
 
 type MockServerConfig struct {
-	Host    string      `json:"host"`
-	Port    int32       `json:"port"`
-	Matches []MatchItem `json:"matchs"`
+	Host        string      `json:"host"`
+	Port        int32       `json:"port"`
+	DumpRequest bool        `json:"dump_request"`
+	Matches     []MatchItem `json:"matchs"`
 }

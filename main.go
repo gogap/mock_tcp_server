@@ -8,16 +8,25 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"os"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"github.com/gogap/mock_tcp_server/config"
 )
 
 var (
 	conf = config.MockServerConfig{}
+
+	reqID   int64 = 0
+	dumpDir       = "./dump"
 )
 
 func main() {
+	log.SetOutput(os.Stdout)
+
+	now := time.Now()
 
 	if bFile, e := ioutil.ReadFile("server.conf"); e != nil {
 		log.Fatalln(e)
@@ -45,6 +54,17 @@ func main() {
 		tcpListener = listener
 	}
 
+	if conf.DumpRequest {
+		dumpDir = fmt.Sprintf("./dump/%d", now.UnixNano())
+		fmt.Printf("[dump dir]: %s\n", dumpDir)
+		if !is_dir_exist(dumpDir) {
+			if e := os.MkdirAll(dumpDir, os.ModePerm); e != nil {
+				log.Fatal(e)
+				return
+			}
+		}
+	}
+
 	fmt.Printf("Listening:%s:%d\n", conf.Host, conf.Port)
 
 	for {
@@ -59,25 +79,31 @@ func main() {
 }
 
 func handle_client(conn net.Conn) {
-	fmt.Printf("client connected: %s\n", conn.RemoteAddr().String())
+	atomic.AddInt64(&reqID, 1)
+
+	fmt.Printf("[%d]client connected: %s\n", reqID, conn.RemoteAddr().String())
 
 	var buf [2048]byte
 
-	if _, e := conn.Read(buf[0:]); e != nil {
+	if l, e := conn.Read(buf[0:]); e != nil {
 		log.Fatalln(e)
 		return
 	} else {
+		if conf.DumpRequest {
+			filename := fmt.Sprintf("%s/%d.dat", dumpDir, reqID)
+			ioutil.WriteFile(filename, buf[0:l], 0666)
+		}
 		for _, matchItem := range conf.Matches {
 			matched := false
 			if matchItem.Type == "string" {
-				if strings.Contains(string(buf[0:]), matchItem.MatchData) {
+				if strings.Contains(string(buf[0:l]), matchItem.MatchData) {
 					matched = true
 				}
 			} else if matchItem.Type == "byte" {
 				if bMath, e := hex.DecodeString(matchItem.MatchData); e != nil {
 					log.Fatalln(e)
 					return
-				} else if bytes.Contains(buf[0:], bMath) {
+				} else if bytes.Contains(buf[0:l], bMath) {
 					matched = true
 				}
 			} else {
@@ -100,5 +126,15 @@ func handle_client(conn net.Conn) {
 			}
 		}
 		fmt.Println("nothing matched.")
+	}
+}
+
+func is_dir_exist(path string) bool {
+	fi, err := os.Stat(path)
+
+	if err != nil {
+		return os.IsExist(err)
+	} else {
+		return fi.IsDir()
 	}
 }
