@@ -9,6 +9,7 @@ A tcp server mock, if receive some matched bytes, it will response the specific 
 {
     "host": "127.0.0.1",
     "port": 8080,
+    "dump_request": true,
     "matchs": [{
         "type": "string",
         "match_data": "efg",
@@ -21,6 +22,14 @@ A tcp server mock, if receive some matched bytes, it will response the specific 
 }
 ```
 
+> type:
+>   [string|byte]
+> match_data:
+>   string:just input match string
+>   byte:ascii
+> 
+> if configured the dump_request = true, it will dump the request data to ./dump/{timestamp}/{ID}.dat
+
 #### Start it
 ```bash
 $ go run main.go
@@ -28,4 +37,5 @@ $ go run main.go
 
 #### Test it
 Open browser, and test `http://127.0.0.1:8080/abc` and `http://127.0.0.1:8080/efg`, you will get different data.
+
 
