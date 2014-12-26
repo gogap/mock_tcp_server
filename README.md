@@ -22,13 +22,14 @@ A tcp server mock, if receive some matched bytes, it will response the specific 
 }
 ```
 
-> type:
->   [string|byte]
-> match_data:
->   string:just input match string
->   byte:ascii
-> 
-> if configured the dump_request = true, it will dump the request data to ./dump/{timestamp}/{ID}.dat
+- type
+    string
+    byte
+- match_data
+    string: just input match string
+    byte:ascii
+- dump_request
+    if configured the dump_request = true, will dump the request data to file `./dump/{timestamp}/{ID}.dat`
 
 #### Start it
 ```bash
