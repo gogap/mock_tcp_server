@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -21,14 +22,29 @@ var (
 
 	reqID   int64 = 0
 	dumpDir       = "./dump"
+
+	configFile = "server.conf"
 )
 
 func main() {
+
 	log.SetOutput(os.Stdout)
+
+	short := " (shorthand)"
+
+	configfileUsage := "the server config file"
+	flag.StringVar(&configFile, "config", "", configfileUsage)
+	flag.StringVar(&configFile, "c", "", configfileUsage+short)
+
+	flag.Parse()
 
 	now := time.Now()
 
-	if bFile, e := ioutil.ReadFile("server.conf"); e != nil {
+	if configFile == "" {
+		configFile = "server.conf"
+	}
+
+	if bFile, e := ioutil.ReadFile(configFile); e != nil {
 		log.Fatalln(e)
 		return
 	} else {
